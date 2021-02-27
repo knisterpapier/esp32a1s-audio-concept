@@ -9,6 +9,7 @@
 
 #include "AC101.h"
 #include "coresignal.h"
+#include <driver/adc.h>
 
 extern "C" {
     void app_main(void);
@@ -40,11 +41,26 @@ void app_main() {
     // Usage: ///////////////////////////////////
     //faustSawtooth.setParamValue("freq",rand()%(2000-50 + 1) + 50); 
 
+
+
+    int read_raw;
+    adc2_config_channel_atten( ADC2_CHANNEL_1, ADC_ATTEN_0db );
+
+    
+
+
+
     while(1) {
-        for (int i = 0; i < 1; i = i + 0.01) {
-        printf("looop... %i", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        _coresignal.setParamValue("dry_wet", i);
+        esp_err_t r = adc2_get_raw( ADC2_CHANNEL_1, ADC_WIDTH_12Bit, &read_raw);
+        if ( r == ESP_OK ) {
+            printf("%d\n", read_raw );
+        } else if ( r == ESP_ERR_TIMEOUT ) {
+            printf("ADC2 used by Wi-Fi.\n");
+        }
+
+        printf("looop... %i", read_raw);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        _coresignal.setParamValue("own_delay", read_raw);
         }
   }
-}
+

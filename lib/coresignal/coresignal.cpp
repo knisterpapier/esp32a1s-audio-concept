@@ -8302,6 +8302,8 @@ class mydsp : public dsp {
 	
  private:
 	
+	FAUSTFLOAT fHslider0;
+	FAUSTFLOAT fHslider1;
 	int IOTA;
 	float fRec0[32768];
 	int fSampleRate;
@@ -8360,6 +8362,8 @@ class mydsp : public dsp {
 	}
 	
 	virtual void instanceResetUserInterface() {
+		fHslider0 = FAUSTFLOAT(0.5f);
+		fHslider1 = FAUSTFLOAT(15000.0f);
 	}
 	
 	virtual void instanceClear() {
@@ -8389,6 +8393,8 @@ class mydsp : public dsp {
 	
 	virtual void buildUserInterface(UI* ui_interface) {
 		ui_interface->openVerticalBox("coresignal");
+		ui_interface->addHorizontalSlider("dry_wet", &fHslider0, 0.5f, 0.0f, 1.0f, 0.100000001f);
+		ui_interface->addHorizontalSlider("own_delay", &fHslider1, 15000.0f, 2000.0f, 20000.0f, 500.0f);
 		ui_interface->closeBox();
 	}
 	
@@ -8396,9 +8402,14 @@ class mydsp : public dsp {
 		FAUSTFLOAT* input0 = inputs[0];
 		FAUSTFLOAT* input1 = inputs[1];
 		FAUSTFLOAT* output0 = outputs[0];
+		float fSlow0 = float(fHslider0);
+		float fSlow1 = (0.5f * fSlow0);
+		int iSlow2 = (int(float(fHslider1)) + 1);
+		float fSlow3 = (1.0f - fSlow0);
 		for (int i = 0; (i < count); i = (i + 1)) {
-			fRec0[(IOTA & 32767)] = ((float(input0[i]) + float(input1[i])) + (0.5f * fRec0[((IOTA - 20001) & 32767)]));
-			output0[i] = FAUSTFLOAT(fRec0[((IOTA - 0) & 32767)]);
+			float fTemp0 = (float(input0[i]) + float(input1[i]));
+			fRec0[(IOTA & 32767)] = (fTemp0 + (fSlow1 * fRec0[((IOTA - iSlow2) & 32767)]));
+			output0[i] = FAUSTFLOAT((fRec0[((IOTA - 0) & 32767)] + (fSlow3 * fTemp0)));
 			IOTA = (IOTA + 1);
 		}
 	}
