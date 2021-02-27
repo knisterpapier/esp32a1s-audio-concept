@@ -41,10 +41,10 @@ void app_main() {
     //faustSawtooth.setParamValue("freq",rand()%(2000-50 + 1) + 50); 
 
     while(1) {
-        for (int i = 2000; i < 20000; i = i + 500) {
+        for (int i = 0; i < 1; i = i + 0.01) {
         printf("looop... %i", i);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        _coresignal.setParamValue("own_delay", i);
+        _coresignal.setParamValue("dry_wet", i);
         }
   }
 }
