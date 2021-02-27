@@ -1,5 +1,4 @@
 // Options:
-#define HAS_MAIN
 #define A1S_BOARD true
 /* ------------------------------------------------------------
 name: "coresignal"
@@ -8266,7 +8265,7 @@ struct dsp_poly_factory : public dsp_factory {
 #endif
 
 #ifdef HAS_MAIN
-    #include "WM8978.h"
+#include "WM8978.h"
 #endif
 
 /******************************************************************************
