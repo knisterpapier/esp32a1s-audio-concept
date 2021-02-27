@@ -4,8 +4,9 @@
 
 // own delay
 import("stdfaust.lib");
-process = + : +~@(20000)*0.5;
-			
+own_delay = hslider("own_delay",15000,2000,20000,500);
+process = + : +~@(own_delay)*0.5;
+	
 
 // own reverbarator
 // A = hslider("label",0.5,0.1,0.9,0.05);
