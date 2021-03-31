@@ -8302,33 +8302,68 @@ class mydsp : public dsp {
 	
  private:
 	
-	FAUSTFLOAT fHslider0;
-	FAUSTFLOAT fHslider1;
-	int IOTA;
-	float fRec0[32768];
+	FAUSTFLOAT fButton0;
+	float fVec0[2];
+	FAUSTFLOAT fCheckbox0;
+	FAUSTFLOAT fButton1;
+	float fVec1[2];
+	FAUSTFLOAT fCheckbox1;
+	int iRec1[2];
+	float fRec0[4];
+	FAUSTFLOAT fButton2;
+	float fVec2[2];
 	int fSampleRate;
 	
  public:
 	
 	void metadata(Meta* m) { 
+		m->declare("basics.lib/name", "Faust Basic Element Library");
+		m->declare("basics.lib/version", "0.1");
 		m->declare("filename", "coresignal.dsp");
+		m->declare("filters.lib/fir:author", "Julius O. Smith III");
+		m->declare("filters.lib/fir:copyright", "Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>");
+		m->declare("filters.lib/fir:license", "MIT-style STK-4.3 license");
+		m->declare("filters.lib/iir:author", "Julius O. Smith III");
+		m->declare("filters.lib/iir:copyright", "Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>");
+		m->declare("filters.lib/iir:license", "MIT-style STK-4.3 license");
+		m->declare("filters.lib/lowpass0_highpass1", "Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>");
+		m->declare("filters.lib/name", "Faust Filters Library");
+		m->declare("maths.lib/author", "GRAME");
+		m->declare("maths.lib/copyright", "GRAME");
+		m->declare("maths.lib/license", "LGPL with exception");
+		m->declare("maths.lib/name", "Faust Math Library");
+		m->declare("maths.lib/version", "2.3");
 		m->declare("name", "coresignal");
+		m->declare("noises.lib/name", "Faust Noise Generator Library");
+		m->declare("noises.lib/version", "0.0");
 	}
 
 	virtual int getNumInputs() {
-		return 2;
+		return 5;
 	}
 	virtual int getNumOutputs() {
-		return 1;
+		return 2;
 	}
 	virtual int getInputRate(int channel) {
 		int rate;
 		switch ((channel)) {
 			case 0: {
-				rate = 1;
+				rate = 0;
 				break;
 			}
 			case 1: {
+				rate = 0;
+				break;
+			}
+			case 2: {
+				rate = 0;
+				break;
+			}
+			case 3: {
+				rate = 1;
+				break;
+			}
+			case 4: {
 				rate = 1;
 				break;
 			}
@@ -8343,6 +8378,10 @@ class mydsp : public dsp {
 		int rate;
 		switch ((channel)) {
 			case 0: {
+				rate = 1;
+				break;
+			}
+			case 1: {
 				rate = 1;
 				break;
 			}
@@ -8362,14 +8401,28 @@ class mydsp : public dsp {
 	}
 	
 	virtual void instanceResetUserInterface() {
-		fHslider0 = FAUSTFLOAT(0.5f);
-		fHslider1 = FAUSTFLOAT(15000.0f);
+		fButton0 = FAUSTFLOAT(0.0f);
+		fCheckbox0 = FAUSTFLOAT(0.0f);
+		fButton1 = FAUSTFLOAT(0.0f);
+		fCheckbox1 = FAUSTFLOAT(0.0f);
+		fButton2 = FAUSTFLOAT(0.0f);
 	}
 	
 	virtual void instanceClear() {
-		IOTA = 0;
-		for (int l0 = 0; (l0 < 32768); l0 = (l0 + 1)) {
-			fRec0[l0] = 0.0f;
+		for (int l0 = 0; (l0 < 2); l0 = (l0 + 1)) {
+			fVec0[l0] = 0.0f;
+		}
+		for (int l1 = 0; (l1 < 2); l1 = (l1 + 1)) {
+			fVec1[l1] = 0.0f;
+		}
+		for (int l2 = 0; (l2 < 2); l2 = (l2 + 1)) {
+			iRec1[l2] = 0;
+		}
+		for (int l3 = 0; (l3 < 4); l3 = (l3 + 1)) {
+			fRec0[l3] = 0.0f;
+		}
+		for (int l4 = 0; (l4 < 2); l4 = (l4 + 1)) {
+			fVec2[l4] = 0.0f;
 		}
 	}
 	
@@ -8393,24 +8446,63 @@ class mydsp : public dsp {
 	
 	virtual void buildUserInterface(UI* ui_interface) {
 		ui_interface->openVerticalBox("coresignal");
-		ui_interface->addHorizontalSlider("dry_wet", &fHslider0, 0.5f, 0.0f, 1.0f, 0.100000001f);
-		ui_interface->addHorizontalSlider("own_delay", &fHslider1, 15000.0f, 2000.0f, 20000.0f, 500.0f);
+		ui_interface->declare(0, "1", "");
+		ui_interface->openVerticalBox("Input Config");
+		ui_interface->declare(&fCheckbox0, "1", "");
+		ui_interface->declare(&fCheckbox0, "tooltip", "When this is checked, the stereo external audio inputs are   disabled (good for hearing the impulse response or pink-noise response alone)");
+		ui_interface->addCheckButton("Mute Ext Inputs", &fCheckbox0);
+		ui_interface->declare(&fCheckbox1, "2", "");
+		ui_interface->declare(&fCheckbox1, "tooltip", "Pink Noise (or 1/f noise) is Constant-Q Noise (useful for adjusting   the EQ sections)");
+		ui_interface->addCheckButton("Pink Noise", &fCheckbox1);
+		ui_interface->closeBox();
+		ui_interface->declare(0, "2", "");
+		ui_interface->openHorizontalBox("Impulse Selection");
+		ui_interface->declare(&fButton1, "1", "");
+		ui_interface->declare(&fButton1, "tooltip", "Send impulse into LEFT channel");
+		ui_interface->addButton("Left", &fButton1);
+		ui_interface->declare(&fButton0, "2", "");
+		ui_interface->declare(&fButton0, "tooltip", "Send impulse into LEFT and RIGHT channels");
+		ui_interface->addButton("Center", &fButton0);
+		ui_interface->declare(&fButton2, "3", "");
+		ui_interface->declare(&fButton2, "tooltip", "Send impulse into RIGHT channel");
+		ui_interface->addButton("Right", &fButton2);
+		ui_interface->closeBox();
 		ui_interface->closeBox();
 	}
 	
 	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
 		FAUSTFLOAT* input0 = inputs[0];
 		FAUSTFLOAT* input1 = inputs[1];
+		FAUSTFLOAT* input2 = inputs[2];
+		FAUSTFLOAT* input3 = inputs[3];
+		FAUSTFLOAT* input4 = inputs[4];
 		FAUSTFLOAT* output0 = outputs[0];
-		float fSlow0 = float(fHslider0);
-		float fSlow1 = (0.5f * fSlow0);
-		int iSlow2 = (int(float(fHslider1)) + 1);
-		float fSlow3 = (1.0f - fSlow0);
+		FAUSTFLOAT* output1 = outputs[1];
+		float fSlow0 = float(fButton0);
+		float fSlow1 = (1.0f - float(fCheckbox0));
+		float fSlow2 = float(fButton1);
+		float fSlow3 = (0.100000001f * float(fCheckbox1));
+		float fSlow4 = float(fButton2);
 		for (int i = 0; (i < count); i = (i + 1)) {
-			float fTemp0 = (float(input0[i]) + float(input1[i]));
-			fRec0[(IOTA & 32767)] = (fTemp0 + (fSlow1 * fRec0[((IOTA - iSlow2) & 32767)]));
-			output0[i] = FAUSTFLOAT((fRec0[((IOTA - 0) & 32767)] + (fSlow3 * fTemp0)));
-			IOTA = (IOTA + 1);
+			fVec0[0] = fSlow0;
+			float fTemp0 = (fSlow0 - fVec0[1]);
+			float fTemp1 = (fTemp0 * float((fTemp0 > 0.0f)));
+			fVec1[0] = fSlow2;
+			float fTemp2 = (fSlow2 - fVec1[1]);
+			iRec1[0] = ((1103515245 * iRec1[1]) + 12345);
+			fRec0[0] = (((0.522189379f * fRec0[3]) + ((4.65661287e-10f * float(iRec1[0])) + (2.49495602f * fRec0[1]))) - (2.0172658f * fRec0[2]));
+			float fTemp3 = (fSlow3 * (((0.0499220341f * fRec0[0]) + (0.0506126992f * fRec0[2])) - ((0.0959935337f * fRec0[1]) + (0.00440878607f * fRec0[3]))));
+			output0[i] = FAUSTFLOAT(((fTemp1 + ((fSlow1 * float(input3[i])) + (fTemp2 * float((fTemp2 > 0.0f))))) + fTemp3));
+			fVec2[0] = fSlow4;
+			float fTemp4 = (fSlow4 - fVec2[1]);
+			output1[i] = FAUSTFLOAT(((fSlow1 * float(input4[i])) + (fTemp3 + (fTemp1 + (fTemp4 * float((fTemp4 > 0.0f)))))));
+			fVec0[1] = fVec0[0];
+			fVec1[1] = fVec1[0];
+			iRec1[1] = iRec1[0];
+			for (int j0 = 3; (j0 > 0); j0 = (j0 - 1)) {
+				fRec0[j0] = fRec0[(j0 - 1)];
+			}
+			fVec2[1] = fVec2[0];
 		}
 	}
 
